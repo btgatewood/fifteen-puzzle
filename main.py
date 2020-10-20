@@ -1,54 +1,67 @@
 import pygame
 
 
-# the grid (puzzle) has 16 cells (spaces) and 15 tiles (pieces)
-
-
-class Tile:
+def get_tile_surface(num):
     size = 100
     color1 = (255, 0, 0)
     color2 = (255, 255, 255)
-    font_name = 'consolas'
-    font_size = 42
-    font_color = (0, 0, 0)
 
-    def __init__(self, num):
-        self.surf = pygame.Surface((self.size, self.size))
-        self.surf.fill(self.color1 if num % 2 else self.color2)
-        font = pygame.font.SysFont(self.font_name, self.font_size, bold=True)
-        text = font.render(str(num), True, self.font_color)  # antialias = True
-        rect = text.get_rect()
-        rect.center = self.surf.get_rect().center
-        self.surf.blit(text, rect)
+    surf = pygame.Surface((size, size))
+    surf.fill(color1 if num % 2 else color2)
+    draw_text(surf, num)
+    return surf
 
 
-def draw_grid(tiles, screen):
+def draw_text(surface, num):
+    name = 'consolas'
+    size = 42
+    color = (0, 0, 0)
+
+    font = pygame.font.SysFont(name, size, bold=True)
+    text = font.render(str(num), True, color)  # antialias = True
+    rect = text.get_rect()
+    rect.center = surface.get_rect().center
+    surface.blit(text, rect)
+
+
+class Puzzle:
     tile_size = 100
-    offset = 5
-    n = 4
+    tile_offset = 5
+    size = (tile_size * 4) + (tile_offset * 3)
 
-    grid_size = (tile_size * n) + (offset * (n - 1))
-    grid = pygame.Surface((grid_size, grid_size))
+    def __init__(self):
+        self.tiles = [get_tile_surface(i) for i in range(1, 16)]
+        self.tiles.append(None)  # add empty space
 
-    for i in range(len(tiles)):
-        x = (i % n) * (tile_size + offset)
-        y = (i // n) * (tile_size + offset)
-        grid.blit(tiles[i].surf, (x, y))
+        self.screen_pos = []
+        for i in range(1, 17):
+            x = ((i - 1) % 4) * (self.tile_size + self.tile_offset)
+            y = ((i - 1) // 4) * (self.tile_size + self.tile_offset)
+            self.screen_pos.append((x, y))
 
-    rect = grid.get_rect()
-    rect.center = screen.get_rect().center
-    screen.blit(grid, rect)
+        # swap last tile and empty space
+        temp = self.tiles[14]
+        self.tiles[14] = self.tiles[15]
+        self.tiles[15] = temp
+
+    def draw(self, screen):
+        surf = pygame.Surface((self.size, self.size))
+        for i in range(len(self.tiles)):
+            if (self.tiles[i]):
+                surf.blit(self.tiles[i], self.screen_pos[i])
+
+        rect = surf.get_rect()
+        rect.center = screen.get_rect().center
+
+        screen.blit(surf, rect)
 
 
 if __name__ == '__main__':
-    screen_size = (500, 500)
-
     pygame.init()
     clock = pygame.time.Clock()
-    screen = pygame.display.set_mode(screen_size)
+    screen = pygame.display.set_mode((500, 500))
 
-    # tiles = get_tiles()  # create the grid
-    tiles = [Tile(i) for i in range(1, 16)]
+    puzzle = Puzzle()
 
     run = True
     while run:
@@ -61,7 +74,7 @@ if __name__ == '__main__':
             elif event.type == pygame.QUIT:
                 run = False
         
-        draw_grid(tiles, screen)  # draw the grid
+        puzzle.draw(screen)
         pygame.display.flip()
 
     pygame.quit()
